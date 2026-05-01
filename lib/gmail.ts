@@ -129,7 +129,3 @@ export async function sendEmail(
   });
 }
 
-export async function getUserEmail(): Promise<string> {
-  const res = await gmail.users.getProfile({ userId: 'me' });
-  return res.data.emailAddress ?? '';
-}

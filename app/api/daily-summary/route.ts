@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getYesterdaysEmails, sendEmail, getUserEmail } from '@/lib/gmail';
+import { getYesterdaysEmails, sendEmail } from '@/lib/gmail';
 import { categorizeEmails } from '@/lib/agent';
 import { generateEmailTemplate } from '@/lib/template';
+
+const SUMMARY_EMAIL = 'arpan@materialdepot.com';
 
 // Vercel cron jobs send an Authorization header with the CRON_SECRET
 export async function GET(request: Request) {
@@ -11,10 +13,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [emails, userEmail] = await Promise.all([
-      getYesterdaysEmails(),
-      getUserEmail(),
-    ]);
+    const emails = await getYesterdaysEmails();
 
     if (emails.length === 0) {
       return NextResponse.json({ message: 'No emails found for yesterday' });
@@ -34,7 +33,7 @@ export async function GET(request: Request) {
     const html = generateEmailTemplate(categorized, dateLabel);
 
     await sendEmail(
-      userEmail,
+      SUMMARY_EMAIL,
       `📧 Daily Email Briefing — ${dateLabel}`,
       html
     );
@@ -49,7 +48,7 @@ export async function GET(request: Request) {
     };
 
     console.log('Daily summary sent:', counts);
-    return NextResponse.json({ success: true, sentTo: userEmail, counts });
+    return NextResponse.json({ success: true, sentTo: SUMMARY_EMAIL, counts });
   } catch (err) {
     console.error('Daily summary failed:', err);
     return NextResponse.json(
