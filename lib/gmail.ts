@@ -20,6 +20,8 @@ export type RawEmail = {
   date: string;
   body: string;
   snippet: string;
+  replied: boolean;
+  threadId: string;
 };
 
 export async function getYesterdaysEmails(): Promise<RawEmail[]> {
@@ -52,7 +54,9 @@ export async function getYesterdaysEmails(): Promise<RawEmail[]> {
         id: msg.id!,
         format: 'full',
       });
-      return parseEmail(detail.data);
+      const email = parseEmail(detail.data);
+      email.replied = await hasBeenReplied(email.threadId, detail.data.internalDate!);
+      return email;
     })
   );
 
@@ -68,13 +72,38 @@ function parseEmail(message: any): RawEmail {
 
   return {
     id: message.id,
+    threadId: message.threadId ?? '',
     subject: h('Subject'),
     from: h('From'),
     to: h('To'),
     date: h('Date'),
     body: extractBody(message.payload).slice(0, 2500),
     snippet: message.snippet ?? '',
+    replied: false, // filled in after
   };
+}
+
+async function hasBeenReplied(threadId: string, receivedAt: string): Promise<boolean> {
+  try {
+    const thread = await gmail.users.threads.get({
+      userId: 'me',
+      id: threadId,
+      format: 'metadata',
+      metadataHeaders: ['From', 'Date'],
+    });
+
+    const messages = thread.data.messages ?? [];
+    const receivedTime = parseInt(receivedAt, 10);
+
+    // Check if any message in the thread is SENT and came after the received email
+    return messages.some((msg) => {
+      const labels = msg.labelIds ?? [];
+      const msgTime = parseInt(msg.internalDate ?? '0', 10);
+      return labels.includes('SENT') && msgTime > receivedTime;
+    });
+  } catch {
+    return false;
+  }
 }
 
 function extractBody(payload: any): string {

@@ -4,11 +4,12 @@ export function generateEmailTemplate(
   emails: CategorizedEmail[],
   dateLabel: string
 ): string {
-  const needsReply = emails.filter((e) => e.category === 'NEEDS_REPLY');
-  const needsAttention = emails.filter((e) => e.category === 'NEEDS_ATTENTION');
-  const fyi = emails.filter((e) => e.category === 'FYI');
-  const internal = emails.filter((e) => e.category === 'INTERNAL');
-  const newsletter = emails.filter((e) => e.category === 'NEWSLETTER');
+  const replied = emails.filter((e) => e.replied);
+  const needsReply = emails.filter((e) => e.category === 'NEEDS_REPLY' && !e.replied);
+  const needsAttention = emails.filter((e) => e.category === 'NEEDS_ATTENTION' && !e.replied);
+  const fyi = emails.filter((e) => e.category === 'FYI' && !e.replied);
+  const internal = emails.filter((e) => e.category === 'INTERNAL' && !e.replied);
+  const newsletter = emails.filter((e) => e.category === 'NEWSLETTER' && !e.replied);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -23,7 +24,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .hdr{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);padding:28px 32px;color:#fff}
 .hdr h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
 .hdr .sub{color:#8892b0;font-size:13px;margin-top:4px}
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-bottom:1px solid #f0f0f0}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:0;border-bottom:1px solid #f0f0f0}
 .stat{padding:16px 10px;text-align:center;border-right:1px solid #f0f0f0}
 .stat:last-child{border-right:none}
 .stat .n{font-size:26px;font-weight:800;line-height:1}
@@ -33,6 +34,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .s-fyi .n{color:#2980b9}
 .s-int .n{color:#8e44ad}
 .s-news .n{color:#95a5a6}
+.s-replied .n{color:#27ae60}
 .section{padding:24px 28px;border-bottom:1px solid #f5f5f5}
 .section:last-child{border-bottom:none}
 .sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
@@ -92,6 +94,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="n">${newsletter.length}</div>
       <div class="l">Newsletters</div>
     </div>
+    <div class="stat s-replied">
+      <div class="n">${replied.length}</div>
+      <div class="l">Replied</div>
+    </div>
   </div>
 
   ${needsReply.length > 0 ? `
@@ -119,6 +125,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="sec-title" style="color:#95a5a6">📰 Newsletters &amp; Promotions &nbsp;(${newsletter.length})</div>
     <ul class="fyi-list">
       ${newsletter.map(fyiRow).join('')}
+    </ul>
+  </div>` : ''}
+
+  ${replied.length > 0 ? `
+  <div class="section">
+    <div class="sec-title" style="color:#27ae60">✅ Already Replied &nbsp;(${replied.length})</div>
+    <ul class="fyi-list">
+      ${replied.map(fyiRow).join('')}
     </ul>
   </div>` : ''}
 
