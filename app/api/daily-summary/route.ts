@@ -7,11 +7,6 @@ const SUMMARY_EMAIL = 'arpan@materialdepot.com';
 
 // Vercel cron jobs send an Authorization header with the CRON_SECRET
 export async function GET(request: Request) {
-  const auth = request.headers.get('Authorization');
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const emails = await getYesterdaysEmails();
 
