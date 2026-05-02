@@ -112,7 +112,7 @@ export async function sendEmail(
     `To: ${to}`,
     'Content-Type: text/html; charset=utf-8',
     'MIME-Version: 1.0',
-    `Subject: ${subject}`,
+    `Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`,
     '',
     htmlBody,
   ].join('\r\n');
